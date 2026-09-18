@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AX Portal 관리자 페이지 - 안1 (좌측 사이드바형)</title>
+<style>
+  :root{
+    --text-dark:#111;--text-mid:#333;--text-gray:#6b7280;--text-gray2:#9ca3af;
+    --border:#dde0e8;--border-light:#f0f0f0;--bg:#f4f5f7;--navy:#1a1a2e;
+    --indigo:#6366f1;--blue:#3b82f6;--green:#10b981;--amber:#de8f32;--red:#ef4444;--cyan:#0891b2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text-dark);}
+  header{background:var(--navy);color:#fff;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:sticky;top:0;z-index:50;}
+  .h-title{font-size:16px;font-weight:700;}
+  .h-tag{color:#f97316;font-weight:700;margin-left:6px;}
+  .h-right{display:flex;align-items:center;gap:14px;font-size:12.5px;}
+  .h-right em{color:#9ca3af;font-style:normal;margin-left:3px;}
+  .back-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;}
+  .draft-tag{background:var(--indigo);padding:4px 11px;border-radius:14px;font-size:11.5px;font-weight:700;margin-right:10px;}
+  .soon-pill{font-size:9.5px;font-weight:700;color:var(--text-gray2);background:#eef0f3;border-radius:10px;padding:2px 7px;margin-left:auto;}
+  .nav-item.disabled{color:var(--text-gray2);cursor:default;}
+  .nav-item.disabled:hover{background:none;}
+
+  .body-wrap{display:flex;align-items:flex-start;}
+  .sidebar{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);min-height:calc(100vh - 56px);padding:18px 12px;position:sticky;top:56px;}
+  .nav-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;padding:11px 13px;font-size:13.5px;font-weight:700;color:var(--text-mid);border-radius:9px;cursor:pointer;margin-bottom:2px;}
+  .nav-item:hover{background:#f4f5f7;}
+  .nav-item.active{background:#eef0ff;color:var(--indigo);}
+
+  main{flex:1;min-width:0;padding:26px 30px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .15s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  h2{font-size:19px;font-weight:800;margin-bottom:4px;}
+  .desc{font-size:12.5px;color:var(--text-gray);margin-bottom:16px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .primary-btn{background:var(--indigo);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .link-btn{background:none;border:none;color:var(--indigo);font-size:12.5px;font-weight:700;cursor:pointer;padding:6px 2px;margin-top:4px;}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 20px;}
+  .kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .kpi .l{font-size:12px;color:var(--text-gray);font-weight:600;margin-bottom:8px;}
+  .kpi .v{font-size:24px;font-weight:800;}
+  .kpi .u{font-size:12px;font-weight:600;color:var(--text-gray);margin-left:3px;}
+  .kpi .s{font-size:11.5px;color:var(--text-gray2);margin-top:6px;}
+  .kpi .s.up{color:#10b981;font-weight:700;}
+
+  .two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+  .card-head{font-size:13.5px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;}
+  .card-head .note{font-size:11.5px;color:var(--text-gray2);font-weight:500;}
+
+  .visit-chart{display:flex;align-items:flex-end;gap:14px;height:140px;}
+  .visit-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .visit-bars{display:flex;align-items:flex-end;gap:3px;height:105px;}
+  .vb{width:12px;border-radius:3px 3px 0 0;}
+  .vb.prev{background:#e2e4e9;}
+  .vb.now{background:var(--indigo);}
+  .visit-day-label{font-size:11px;color:var(--text-gray);}
+  .legend{display:flex;gap:14px;margin-top:10px;font-size:11.5px;color:var(--text-gray);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:8px;height:8px;border-radius:2px;display:inline-block;}
+
+  .rank-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+  .rank-list li{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+  .rank-badge{width:20px;height:20px;border-radius:50%;background:#eef0ff;color:var(--indigo);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rank-badge.top{background:var(--indigo);color:#fff;}
+  .rank-title{flex:1;font-weight:600;color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rank-meta{color:var(--text-gray2);font-size:11px;white-space:nowrap;}
+  .rank-val{font-weight:700;color:var(--text-dark);font-size:12px;white-space:nowrap;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  th{text-align:left;background:#f8f9fb;color:var(--text-gray);font-weight:700;font-size:11.5px;padding:10px 14px;border-bottom:1px solid var(--border);}
+  td{padding:11px 14px;border-bottom:1px solid var(--border-light);color:var(--text-mid);}
+  tr:last-child td{border-bottom:none;}
+  .td-name{font-weight:700;color:var(--text-dark);}
+  .up-txt{color:#10b981;font-weight:700;}
+  .down-txt{color:#ef4444;font-weight:700;}
+  .cat-none{color:var(--text-gray2);}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+  .pill.on{background:#e7f9f0;color:#0d9c66;}
+  .pill.off{background:#f1f2f4;color:#6b7280;}
+  .mini-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:600;color:var(--text-mid);cursor:pointer;margin-right:5px;}
+  .mini-btn.danger{color:#d62b2b;border-color:#f4c6c6;}
+  .mini-btn.danger:hover{background:#fdecec;}
+  .row-disabled{opacity:.5;}
+  .pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;}
+  .page-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;}
+  .page-btn:hover{background:#f4f5f7;}
+  .page-btn:disabled{opacity:.4;cursor:default;}
+  .page-btn:disabled:hover{background:#fff;}
+  .page-nums{display:flex;gap:4px;}
+  .page-num{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .page-num:hover{background:#f4f5f7;}
+  .page-num.active{background:var(--indigo);border-color:var(--indigo);color:#fff;}
+  .search-box{display:flex;align-items:center;flex:0 0 240px;border:1px solid var(--border);border-radius:7px;background:#fff;overflow:hidden;}
+  .search-box input{flex:1;border:none;outline:none;padding:8px 10px;font-size:12.5px;color:var(--text-mid);min-width:0;}
+  .search-btn{border:none;border-left:1px solid var(--border);background:#f8f9fb;width:36px;height:100%;padding:8px 0;font-size:13px;cursor:pointer;color:var(--text-mid);flex-shrink:0;}
+  .search-btn:hover{background:#eef0f3;}
+  .search-hidden{display:none !important;}
+  .filter-tabs{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+  .filter-tab{background:none;border:none;font-size:13px;font-weight:600;color:var(--text-gray);cursor:pointer;padding:2px 0;}
+  .filter-tab:hover{color:var(--text-mid);}
+  .filter-tab.active{color:var(--indigo);font-weight:800;}
+  .row-disabled .perm-toggle{cursor:default;pointer-events:none;}
+  .row-disabled .mini-btn{cursor:default;}
+  .mini-btn:hover{background:#f4f5f7;}
+  .select{border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--text-mid);background:#fff;}
+
+  .subtabs{display:flex;gap:6px;margin:14px 0 16px;border-bottom:1px solid var(--border);}
+  .subtab{background:none;border:none;padding:9px 14px;font-size:13px;font-weight:700;color:var(--text-gray);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .subtab.active{color:var(--indigo);border-bottom-color:var(--indigo);}
+  .stab{display:none;}
+  .stab.active{display:block;}
+
+  .perm-toggle{display:inline-block;width:34px;height:19px;border-radius:20px;background:#e2e4e9;position:relative;cursor:pointer;vertical-align:middle;}
+  .perm-toggle::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .perm-toggle.on{background:var(--indigo);}
+  .perm-toggle.on::after{left:17px;}
+  .role-select-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .role-chip{border:1px solid var(--border);background:#fff;border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer;}
+  .role-chip.active{background:var(--indigo);border-color:var(--indigo);color:#fff;}
+  .user-avatar{width:30px;height:30px;border-radius:50%;color:#fff;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .avatar-wrap{position:relative;display:inline-flex;flex-shrink:0;}
+  .status-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;border:2px solid #fff;box-sizing:content-box;}
+  .status-dot.online{background:#22c55e;}
+  .status-dot.away{background:#fff;border:2px solid #9ca3af;}
+  .me-badge{font-size:10px;font-weight:700;color:var(--indigo);background:#eef0ff;border-radius:10px;padding:1px 7px;}
+  .tier-tag{display:inline-block;font-size:8.5px;font-weight:700;border-radius:8px;padding:1px 6px;margin-top:3px;}
+  .tier-tag.t1{background:#eef2f5;color:#6b7280;}
+  .tier-tag.t2{background:#e1f5fb;color:#0891b2;}
+  .tier-tag.t3{background:#fff1e6;color:#d9660c;}
+
+  .tier-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .tier-col{border-radius:12px;padding:14px 16px;border:1px solid var(--border);}
+  .tier-col.gold{background:linear-gradient(180deg,#fff9e8,#fff);border-color:#f0d989;}
+  .tier-col.silver{background:linear-gradient(180deg,#f5f6f8,#fff);border-color:#d8dbe2;}
+  .tier-col.bronze{background:linear-gradient(180deg,#fbeee3,#fff);border-color:#e8c7a8;}
+  .tier-head{font-size:13px;font-weight:800;color:var(--text-dark);display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+  .tier-sub{font-size:10.5px;font-weight:600;color:var(--text-gray);}
+  .tier-count{margin-left:auto;font-size:11px;font-weight:700;color:var(--text-gray);background:#fff;border:1px solid var(--border);border-radius:10px;padding:1px 8px;}
+  .copy-btn{background:#fff;border:1px solid var(--border);border-radius:6px;width:22px;height:22px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:var(--text-gray);flex-shrink:0;}
+  .copy-btn:hover{background:#f4f5f7;color:var(--indigo);}
+  .copy-btn.copied{color:#10b981;border-color:#10b981;}
+  .mini-btn.copied{color:#10b981;border-color:#10b981;font-weight:700;}
+  .tier-list{list-style:none;display:flex;flex-direction:column;gap:7px;max-height:148px;overflow-y:auto;padding-right:6px;margin-right:-6px;}
+  .tier-list::-webkit-scrollbar{width:5px;}
+  .tier-list::-webkit-scrollbar-thumb{background:#d3d6de;border-radius:3px;}
+  .tier-list::-webkit-scrollbar-track{background:transparent;}
+  .tier-list li{font-size:12.5px;font-weight:700;color:var(--text-dark);flex-shrink:0;}
+  .tier-org{font-size:11px;font-weight:600;color:var(--text-gray);margin-left:6px;}
+  .bs-row.hidden-cat{display:none !important;}
+</style>
+</head>
+<body>
+<header>
+  <div><span class="draft-tag">1차 확정 · 대시보드</span><span class="h-title">AX Portal <span class="h-tag">Admin</span></span></div>
+  <div class="h-right">
+    <span>👤 김현주 <em>· 최고 관리자</em></span>
+    <button class="back-btn">← 포탈로 돌아가기</button>
+  </div>
+</header>
+
+<div class="body-wrap">
+  <nav class="sidebar">
+    <button class="nav-item active" data-p="dash" onclick="go('dash', this)">📊 대시보드</button>
+    <button class="nav-item" data-p="roles" onclick="go('roles', this)">🛡️ 역할 관리</button>
+    <button class="nav-item disabled" title="추후 순차 오픈 예정">🗂️ 게시판 관리<span class="soon-pill">준비중</span></button>
+    <button class="nav-item disabled" title="추후 순차 오픈 예정">📣 공지·배너 관리<span class="soon-pill">준비중</span></button>
+  </nav>
+
+  <main>
+    <!-- 대시보드 -->
+    <section class="panel active" id="p-dash">
+      <div class="panel-head" style="margin-bottom:2px;">
+        <h2 style="margin-bottom:0;">대시보드</h2>
+        <button class="mini-btn" onclick="exportDashboardCSV()">📥 CSV 내보내기</button>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="l">이번 주 방문자</div><div class="v">1,842<span class="u">명</span></div><div class="s up">▲ 전주 대비 11%</div></div>
+        <div class="kpi"><div class="l">이번주 신규 게시글</div><div class="v">248<span class="u">건</span></div><div class="s up">▲ 전주 대비 12%</div></div>
+        <div class="kpi"><div class="l">최다 클릭률 게시판</div><div class="v" id="topCtrValue">18.4<span class="u">%</span></div><div class="s" id="topCtrName">조직별 게시판</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head" style="justify-content:space-between;">
+            <span>방문자 수 추이</span>
+            <select class="select" id="visitPeriod" onchange="renderVisitChart(this.value)">
+              <option value="today">오늘</option>
+              <option value="week" selected>이번 주</option>
+              <option value="2weeks">최근 2주</option>
+              <option value="month">최근 1개월</option>
+              <option value="3months">최근 3개월</option>
+            </select>
+          </div>
+          <div class="visit-chart" id="visitChartContainer"></div>
+          <div class="legend"><span><i style="background:#e2e4e9"></i><span id="legendPrev">지난 주</span></span><span><i style="background:var(--indigo)"></i><span id="legendNow">이번 주</span></span></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span>인기 게시글 TOP5</span>
+            <select class="select" id="popPeriod" onchange="renderPopular(this.value)">
+              <option value="today">오늘</option>
+              <option value="week" selected>이번 주</option>
+              <option value="2weeks">최근 2주</option>
+              <option value="month">최근 1개월</option>
+              <option value="3months">최근 3개월</option>
+            </select>
+          </div>
+          <ul class="rank-list" id="popList"></ul>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head">
+            <span>댓글 많은 게시글 TOP5</span>
+            <select class="select" id="commentPeriod" onchange="renderComments(this.value)">
+              <option value="today">오늘</option>
+              <option value="week" selected>이번 주</option>
+              <option value="2weeks">최근 2주</option>
+              <option value="month">최근 1개월</option>
+              <option value="3months">최근 3개월</option>
+            </select>
+          </div>
+          <ul class="rank-list" id="commentList"></ul>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span>클릭률 TOP5</span>
+            <select class="select" id="ctrPeriod" onchange="renderCtr(this.value)">
+              <option value="today">오늘</option>
+              <option value="week" selected>이번 주</option>
+              <option value="2weeks">최근 2주</option>
+              <option value="month">최근 1개월</option>
+              <option value="3months">최근 3개월</option>
+            </select>
+          </div>
+          <ul class="rank-list" id="ctrList"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">오늘의 온보딩 리더보드</div>
+        <div class="tier-row">
+          <div class="tier-col gold">
+            <div class="tier-head">🥇 마스터 <span class="tier-count">8명</span><button class="copy-btn" title="명단 복사" onclick="copyTierList('tier-gold', this)">📋</button></div>
+            <ul class="tier-list" id="tier-gold">
+              <li>이수민 <span class="tier-org">개발실</span></li>
+              <li>박도윤 <span class="tier-org">AI혁신실</span></li>
+              <li>정하늘 <span class="tier-org">그래픽팀</span></li>
+              <li>최유진 <span class="tier-org">PMO</span></li>
+              <li>강태오 <span class="tier-org">개발실</span></li>
+              <li>윤서아 <span class="tier-org">경영지원실</span></li>
+              <li>임재현 <span class="tier-org">커머스팀</span></li>
+              <li>노은채 <span class="tier-org">AI혁신실</span></li>
+            </ul>
+          </div>
+          <div class="tier-col silver">
+            <div class="tier-head">🥈 숙련자 <span class="tier-count">3명</span><button class="copy-btn" title="명단 복사" onclick="copyTierList('tier-silver', this)">📋</button></div>
+            <ul class="tier-list" id="tier-silver">
+              <li>김하은 <span class="tier-org">경영지원실</span></li>
+              <li>서준혁 <span class="tier-org">개발실</span></li>
+              <li>한지민 <span class="tier-org">커머스팀</span></li>
+            </ul>
+          </div>
+          <div class="tier-col bronze">
+            <div class="tier-head">🥉 입문자 <span class="tier-count">2명</span><button class="copy-btn" title="명단 복사" onclick="copyTierList('tier-bronze', this)">📋</button></div>
+            <ul class="tier-list" id="tier-bronze">
+              <li>정민준 <span class="tier-org">개발실</span></li>
+              <li>오세아 <span class="tier-org">AI혁신실</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="panel-head" style="margin-bottom:12px;">
+          <div class="card-head" style="margin:0;">게시판별 활동 요약</div>
+          <select class="select" id="boardFilter" onchange="filterBoardSummary()">
+            <option value="all">전체 카테고리</option>
+            <option value="Knowledge">Knowledge</option>
+            <option value="Workspace">Workspace</option>
+            <option value="Lounge">Lounge</option>
+          </select>
+        </div>
+        <table id="boardSummaryTable">
+          <thead><tr><th>게시판</th><th>게시글</th><th>조회수</th><th>전주 대비</th><th>카테고리</th></tr></thead>
+          <tbody>
+            <tr class="bs-row" data-cat="Knowledge"><td class="td-name">가이드</td><td id="posts-guide">9</td><td id="views-guide">1,204</td><td id="trend-guide" class="up-txt">▲ 6%</td><td>
+              <select class="select cat-select" onchange="updateCategoryRow(this,'guide')">
+                <option value="all">전체</option>
+                <option value="dev">개발</option>
+                <option value="common">공통</option>
+                <option value="plan">기획</option>
+                <option value="tool">도구</option>
+                <option value="auto">자동화</option>
+                <option value="content">콘텐츠</option>
+              </select>
+            </td></tr>
+
+            <tr class="bs-row" data-cat="Knowledge"><td class="td-name">조직별 게시판</td><td id="posts-org">29</td><td id="views-org">2,890</td><td id="trend-org" class="down-txt">▼ 2%</td><td>
+              <select class="select cat-select" onchange="updateCategoryRow(this,'org')">
+                <option value="all">전체</option>
+                <option value="aicenter">AI센터</option>
+                <option value="devmgmt">개발관리실</option>
+                <option value="dev">개발실</option>
+                <option value="graphic">그래픽실</option>
+                <option value="plan">기획실</option>
+                <option value="mobile">모바일사업실</option>
+                <option value="biz">업무관리실</option>
+              </select>
+            </td></tr>
+
+            <tr class="bs-row" data-cat="Knowledge"><td class="td-name">영상 라이브러리</td><td>6</td><td>640</td><td class="up-txt">▲ 3%</td><td class="cat-none">-</td></tr>
+            <tr class="bs-row" data-cat="Lounge"><td class="td-name">서비스 데스크</td><td>42</td><td>5,430</td><td class="up-txt">▲ 8%</td><td class="cat-none">-</td></tr>
+            <tr class="bs-row" data-cat="Lounge"><td class="td-name">커피챗</td><td>15</td><td>1,050</td><td class="up-txt">▲ 21%</td><td class="cat-none">-</td></tr>
+            <tr class="bs-row" data-cat="Lounge"><td class="td-name">헤리릭</td><td>-</td><td>3,204회</td><td class="up-txt">▲ 8%</td><td class="cat-none">-</td></tr>
+            <tr class="bs-row" data-cat="Lounge"><td class="td-name">의견 주세요</td><td>9</td><td>890</td><td class="up-txt">▲ 5%</td><td class="cat-none">-</td></tr>
+            <tr class="bs-row" data-cat="Lounge"><td class="td-name">무엇이든 물어보세요</td><td>18</td><td>2,010</td><td class="up-txt">▲ 9%</td><td class="cat-none">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 게시판 관리 -->
+    <section class="panel" id="p-boards">
+      <div class="panel-head"><h2>게시판·서비스 관리</h2><button class="primary-btn">+ 게시판 추가</button></div>
+      <p class="desc">GNB에 노출되는 게시판/서비스별 담당 조직, 활동량, 공개 여부를 관리합니다. (Echo Studio·Prism Studio·Git 저장소는 별도 시스템 연동으로 제외)</p>
+      <table>
+        <thead><tr><th>게시판/서비스명</th><th>GNB 구분</th><th>유형</th><th>담당 조직</th><th>게시글·이용 수</th><th>이번 주 조회수</th><th>공개 상태</th><th>관리</th></tr></thead>
+        <tbody>
+          <tr><td class="td-name">가이드</td><td>Knowledge</td><td>게시판</td><td>AI혁신실</td><td>128</td><td>1,204</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">조직별 게시판</td><td>Knowledge</td><td>게시판</td><td>전사</td><td>342</td><td>2,890</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">영상 라이브러리</td><td>Knowledge</td><td>게시판</td><td>교육팀</td><td>56</td><td>640</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">회의록</td><td>Workspace</td><td>게시판</td><td>전사</td><td>890</td><td>3,120</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">프로젝트 관리 포털</td><td>Workspace</td><td>게시판</td><td>PMO</td><td>74</td><td>980</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">파일 포맷 변환</td><td>Workspace</td><td>도구</td><td>AI혁신실</td><td>240회/월</td><td>-</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">서비스 데스크</td><td>Lounge</td><td>게시판</td><td>전사</td><td>412</td><td>5,430</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">커피챗</td><td>Lounge</td><td>게시판</td><td>전사</td><td>88</td><td>1,050</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">헤리릭</td><td>Lounge</td><td>AI 봇</td><td>AI혁신실</td><td>3,204회</td><td>-</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">의견 주세요</td><td>Lounge</td><td>게시판</td><td>경영지원실</td><td>63</td><td>890</td><td><span class="pill on">공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+          <tr><td class="td-name">무엇이든 물어보세요</td><td>Lounge</td><td>게시판</td><td>전사</td><td>156</td><td>2,010</td><td><span class="pill off">비공개</span></td><td><button class="mini-btn">편집</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 역할 관리 -->
+    <section class="panel" id="p-roles">
+      <h2>역할 관리</h2>
+      <p class="desc">사용자별 역할을 지정하고, 등급별 기능·게시판 접근 권한을 관리합니다.</p>
+
+      <div class="subtabs">
+        <button class="subtab active" data-r="users" onclick="rTab('users', this)">구성원 관리</button>
+        <button class="subtab" data-r="grades" onclick="rTab('grades', this)">권한 등급 관리</button>
+        <button class="subtab" data-r="matrix" disabled style="opacity:.55;cursor:default;">게시판별 접근 권한 <span class="soon-pill">준비중</span></button>
+      </div>
+
+      <div class="stab active" id="r-users">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div class="search-box">
+            <input type="text" id="memberSearchInput" placeholder="이름으로 검색" onkeydown="if(event.key==='Enter') searchMembers()">
+            <button class="search-btn" onclick="searchMembers()" title="검색">🔍</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="filter-tabs" id="roleFilterTabs">
+              <button class="filter-tab active" data-role="all" onclick="setRoleFilter('all', this)">전체</button>
+              <button class="filter-tab" data-role="최고 관리자" onclick="setRoleFilter('최고 관리자', this)">최고 관리자</button>
+              <button class="filter-tab" data-role="관리자" onclick="setRoleFilter('관리자', this)">관리자</button>
+              <button class="filter-tab" data-role="일반" onclick="setRoleFilter('일반', this)">일반</button>
+            </div>
+            <select class="select" id="memberPageSize" onchange="changeMemberPageSize()">
+              <option value="10" selected>10개씩 보기</option>
+              <option value="20">20개씩 보기</option>
+              <option value="30">30개씩 보기</option>
+              <option value="40">40개씩 보기</option>
+              <option value="50">50개씩 보기</option>
+            </select>
+          </div>
+        </div>
+
+        <table id="memberTable">
+          <thead><tr><th>이름</th><th>소속</th><th>직급</th><th>역할</th><th>관리</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">박장원B</span>
+              </td>
+              <td>SG 개발관리실</td>
+              <td>실장</td>
+              <td><select class="select"><option>최고 관리자</option><option selected>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">임영수B</span>
+              </td>
+              <td>SG 업무관리실</td>
+              <td>실장</td>
+              <td><select class="select"><option selected>최고 관리자</option><option>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">한대웅</span>
+              </td>
+              <td>AI센터</td>
+              <td>실장</td>
+              <td><select class="select"><option selected>최고 관리자</option><option>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">김형근C</span>
+              </td>
+              <td>SG 빌드플랫폼팀</td>
+              <td>팀장</td>
+              <td><select class="select"><option>최고 관리자</option><option>관리자</option><option selected>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">박현주</span>
+              </td>
+              <td>SG 개발관리팀</td>
+              <td>팀장</td>
+              <td><select class="select"><option>최고 관리자</option><option selected>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">이현정B</span>
+              </td>
+              <td>SG AI응용개발팀</td>
+              <td>팀장</td>
+              <td><select class="select"><option>최고 관리자</option><option selected>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">김민나</span>
+              </td>
+              <td>SG 개발관리팀</td>
+              <td>책임</td>
+              <td><select class="select"><option>최고 관리자</option><option>관리자</option><option selected>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">김현주</span><span class="me-badge">나</span>
+              </td>
+              <td>SG AI응용개발팀</td>
+              <td>책임</td>
+              <td><select class="select"><option selected>최고 관리자</option><option>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">유연오</span>
+              </td>
+              <td>SG AI응용개발팀</td>
+              <td>책임</td>
+              <td><select class="select"><option>최고 관리자</option><option selected>관리자</option><option>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <span class="td-name">김시현B</span>
+              </td>
+              <td>SG 업무관리실</td>
+              <td>대리</td>
+              <td><select class="select"><option>최고 관리자</option><option>관리자</option><option selected>일반</option></select></td>
+              <td><button class="mini-btn" onclick="saveUserRole(this)">저장</button><button class="mini-btn danger">삭제</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pagination" id="memberPagination">
+          <button class="page-btn" id="memberPrev" onclick="changeMemberPage(-1)">← 이전</button>
+          <div class="page-nums" id="memberPageNums"></div>
+          <button class="page-btn" id="memberNext" onclick="changeMemberPage(1)">다음 →</button>
+        </div>
+      </div>
+
+      <div class="stab" id="r-grades">
+        <div class="panel-head"><span class="card-head" style="margin:0;">권한 등급별 기능 권한</span></div>
+        <table>
+          <thead>
+            <tr>
+              <th>등급명</th><th>인원</th>
+              <th>게시글 작성<br><span class="tier-tag t1">1차</span></th>
+              <th>본인 글 수정·삭제<br><span class="tier-tag t1">1차</span></th>
+              <th>마감 리스크 대시보드<br><span class="tier-tag t2">2차</span></th>
+              <th>운영 대시보드<br><span class="tier-tag t3">3차</span></th>
+              <th>전체 게시글 관리<br><span class="tier-tag t3">3차</span></th>
+              <th>배너·공지 관리<br><span class="tier-tag t3">3차</span></th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-name">최고 관리자</td><td>2명</td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><button class="mini-btn">수정</button></td></tr>
+            <tr class="row-disabled"><td class="td-name">관리자 <span class="soon-pill">준비중</span></td><td>5명</td>
+              <td><span class="perm-toggle on"></span></td>
+              <td><span class="perm-toggle on"></span></td>
+              <td><span class="perm-toggle on"></span></td>
+              <td><span class="perm-toggle"></span></td>
+              <td><span class="perm-toggle"></span></td>
+              <td><span class="perm-toggle"></span></td>
+              <td><button class="mini-btn" disabled>수정</button></td></tr>
+            <tr><td class="td-name">일반</td><td>1,024명</td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle on" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle" onclick="tp(this)"></span></td>
+              <td><span class="perm-toggle" onclick="tp(this)"></span></td>
+              <td><button class="mini-btn">수정</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="desc" style="margin-top:8px;"><b>1차(공통)</b>: 게시글 작성, 본인 글 수정·삭제는 세 등급 모두 동일합니다. <b>2차</b>: 마감 리스크 대시보드는 관리자부터 추가됩니다. <b>3차</b>: 운영 대시보드, 전체 게시글 관리(타인 글 포함), 배너·공지 관리는 최고 관리자 전용입니다. "글쓰기"는 게시판 콘텐츠(게시글 작성)와 시스템 노출 콘텐츠(배너·공지 관리)로 구분해 별도 권한으로 관리합니다.</p>
+
+      <div class="stab" id="r-matrix">
+        <div class="role-select-row">
+          <span class="desc" style="margin:0;">등급 선택 →</span>
+          <button class="role-chip active" data-r="super" onclick="rSel('super', this)">최고 관리자</button>
+          <button class="role-chip" data-r="boardAdmin" onclick="rSel('boardAdmin', this)">관리자</button>
+          <button class="role-chip" data-r="user" onclick="rSel('user', this)">일반</button>
+        </div>
+        <table id="matrixTable">
+          <thead><tr><th>게시판·서비스명</th><th>조회</th><th>작성</th><th>신고 처리</th><th>게시판 설정</th></tr></thead>
+          <tbody>
+            <tr><td class="td-name">가이드</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+            <tr><td class="td-name">조직별 게시판</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+            <tr><td class="td-name">회의록</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+            <tr><td class="td-name">서비스 데스크</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+            <tr><td class="td-name">커피챗</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+            <tr><td class="td-name">헤리릭</td><td class="pv"></td><td class="pw"></td><td class="pr"></td><td class="ps"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 공지·배너 관리 -->
+    <section class="panel" id="p-notice">
+      <div class="panel-head"><h2>공지·배너 관리</h2><button class="primary-btn">+ 새 배너 등록</button></div>
+      <div class="card">
+        <div class="card-head">현재 노출 중인 상단 배너</div>
+        <table>
+          <thead><tr><th>배너 내용</th><th>노출 순서</th><th>기간</th><th>상태</th><th>관리</th></tr></thead>
+          <tbody>
+            <tr><td class="td-name">신규 AI 도구 안내 배너</td><td>1</td><td>2026-08-01 ~ 2026-09-01</td><td><span class="pill on">노출중</span></td><td><button class="mini-btn">편집</button></td></tr>
+            <tr><td class="td-name">서비스 점검 안내 배너</td><td>2</td><td>2026-08-15 ~ 2026-08-30</td><td><span class="pill on">노출중</span></td><td><button class="mini-btn">편집</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head">공지 팝업 항목</div>
+        <ul class="rank-list">
+          <li><span class="rank-badge">·</span><span class="rank-title">회의실 잡기 링크가 업데이트되었습니다.</span><span class="rank-meta">2026-08-20</span></li>
+          <li><span class="rank-badge">·</span><span class="rank-title">공지 패널이 추가되었습니다.</span><span class="rank-meta">2026-06-30</span></li>
+          <li><span class="rank-badge">·</span><span class="rank-title">간트 차트(에픽) 단계 세그먼트가 수정되었습니다.</span><span class="rank-meta">2026-05-13</span></li>
+        </ul>
+        <button class="link-btn">+ 공지 항목 추가</button>
+      </div>
+      <div class="card">
+        <div class="card-head">노출 기간 설정</div>
+        <p class="desc" style="margin:0;">배너·공지별 시작일과 종료일을 지정하면 해당 기간에 자동으로 노출/종료됩니다. (각 배너·공지 편집 화면에서 설정)</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  function go(name, btn){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('p-'+name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function rTab(name, btn){
+    document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));
+    document.getElementById('r-'+name).classList.add('active');
+    document.querySelectorAll('.subtab').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function tp(el){ el.classList.toggle('on'); }
+
+  // 구성원 관리: 역할 변경 저장
+  function saveUserRole(btn){
+    const row = btn.closest('tr');
+    const select = row.querySelector('select.select');
+    const roleName = select ? select.options[select.selectedIndex].textContent : '';
+    const original = btn.textContent;
+    btn.textContent = '저장됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1200);
+  }
+
+  // 구성원 관리: 페이지네이션 + 검색/필터
+  let MEMBER_PAGE_SIZE = 10;
+  let memberPage = 1;
+  let memberRoleFilter = 'all';
+  function renderMemberPagination(){
+    const rows = Array.from(document.querySelectorAll('#memberTable tbody tr:not(.search-hidden)'));
+    const totalPages = Math.max(1, Math.ceil(rows.length / MEMBER_PAGE_SIZE));
+    if (memberPage > totalPages) memberPage = totalPages;
+    rows.forEach((row, i) => {
+      const page = Math.floor(i / MEMBER_PAGE_SIZE) + 1;
+      row.style.display = (page === memberPage) ? '' : 'none';
+    });
+    const numsEl = document.getElementById('memberPageNums');
+    numsEl.innerHTML = '';
+    for (let p = 1; p <= totalPages; p++){
+      const b = document.createElement('button');
+      b.className = 'page-num' + (p === memberPage ? ' active' : '');
+      b.textContent = p;
+      b.onclick = () => { memberPage = p; renderMemberPagination(); };
+      numsEl.appendChild(b);
+    }
+    document.getElementById('memberPrev').disabled = memberPage <= 1;
+    document.getElementById('memberNext').disabled = memberPage >= totalPages;
+  }
+  function changeMemberPage(delta){
+    memberPage += delta;
+    renderMemberPagination();
+  }
+  function changeMemberPageSize(){
+    MEMBER_PAGE_SIZE = parseInt(document.getElementById('memberPageSize').value, 10);
+    memberPage = 1;
+    renderMemberPagination();
+  }
+  function setRoleFilter(role, btn){
+    memberRoleFilter = role;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    searchMembers();
+  }
+  function searchMembers(){
+    const keyword = document.getElementById('memberSearchInput').value.trim().toLowerCase();
+    document.querySelectorAll('#memberTable tbody tr').forEach(row => {
+      const name = row.querySelector('.td-name')?.textContent.toLowerCase() || '';
+      const roleSelect = row.querySelector('select.select');
+      const role = roleSelect ? roleSelect.options[roleSelect.selectedIndex].textContent : '';
+      const matchesName = !keyword || name.includes(keyword);
+      const matchesRole = memberRoleFilter === 'all' || role === memberRoleFilter;
+      row.classList.toggle('search-hidden', !(matchesName && matchesRole));
+    });
+    memberPage = 1;
+    renderMemberPagination();
+  }
+  renderMemberPagination();
+
+  // 온보딩 리더보드: 명단 복사
+  function copyTierList(listId, btn){
+    const list = document.getElementById(listId);
+    const items = Array.from(list.querySelectorAll('li')).map(li => {
+      const orgEl = li.querySelector('.tier-org');
+      const org = orgEl ? orgEl.textContent.trim() : '';
+      const name = li.childNodes[0].textContent.trim();
+      return org ? `${name} (${org})` : name;
+    });
+    const text = items.join('\n');
+
+    function fallbackCopy(){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    const original = btn.textContent;
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = original;
+    }, 1200);
+  }
+
+  // 방문자 수 추이: 기간 선택
+  const visitPeriods = {
+    today:   { labels: ['0-4시','4-8시','8-12시','12-16시','16-20시','20-24시'],
+               prev: [10,15,40,55,38,20], now: [12,18,52,60,45,25],
+               prevLabel: '어제', nowLabel: '오늘' },
+    week:    { labels: ['월','화','수','목','금','토','일'],
+               prev: [230,255,270,250,225,115,95], now: [284,308,345,300,365,155,130],
+               prevLabel: '지난 주', nowLabel: '이번 주' },
+    '2weeks':{ labels: ['1주차','2주차'],
+               prev: [1290,1050], now: [1520,1310],
+               prevLabel: '이전 2주', nowLabel: '최근 2주' },
+    month:   { labels: ['1주','2주','3주','4주'],
+               prev: [1290,1400,1350,1500], now: [1520,1600,1580,1700],
+               prevLabel: '지난 1개월', nowLabel: '최근 1개월' },
+    '3months':{ labels: ['1월','2월','3월'],
+               prev: [5200,5400,5600], now: [5800,6100,6400],
+               prevLabel: '이전 3개월', nowLabel: '최근 3개월' },
+  };
+  function renderVisitChart(period){
+    const d = visitPeriods[period];
+    const container = document.getElementById('visitChartContainer');
+    const maxVal = Math.max(...d.prev, ...d.now);
+    const maxPx = 105;
+    container.innerHTML = d.labels.map((label, i) => {
+      const prevH = Math.round((d.prev[i] / maxVal) * maxPx);
+      const nowH = Math.round((d.now[i] / maxVal) * maxPx);
+      return `<div class="visit-day"><div class="visit-bars"><div class="vb prev" style="height:${prevH}px;"></div><div class="vb now" style="height:${nowH}px;"></div></div><div class="visit-day-label">${label}</div></div>`;
+    }).join('');
+    document.getElementById('legendPrev').textContent = d.prevLabel;
+    document.getElementById('legendNow').textContent = d.nowLabel;
+  }
+  renderVisitChart('week');
+
+  // 인기 게시글 / 댓글 많은 게시글 / 클릭률: 기간 선택
+  const periodDays = { today: 1, week: 7, '2weeks': 14, month: 30, '3months': 90 };
+
+  const popularPool = [
+    { title: '신규 입사자 온보딩 가이드 v3', meta: '가이드', daily: 172 },
+    { title: '회의실 예약 규칙 안내', meta: '조직별 게시판', daily: 140 },
+    { title: '사내 AI 도구 사용 후기', meta: '커피챗', daily: 125 },
+    { title: '사무실 좌석 배치 변경 안내', meta: '서비스 데스크', daily: 94 },
+    { title: '신규 복지제도 어떻게 생각하세요?', meta: '의견 주세요', daily: 60 },
+    { title: '점심시간 변경 투표', meta: '무엇이든 물어보세요', daily: 52 },
+    { title: '사내 AI 교육 세션 다시보기', meta: '영상 라이브러리', daily: 45 },
+    { title: '헤리릭 활용 꿀팁 모음', meta: '헤리릭', daily: 38 },
+  ];
+  const commentPool = [
+    { title: '타 부서 비방 발언 포함', meta: '커피챗', daily: 12.3 },
+    { title: '신규 복지제도 어떻게 생각?', meta: '의견 주세요', daily: 9.1 },
+    { title: '재택근무 가이드라인 문의', meta: '서비스 데스크', daily: 7.4 },
+    { title: '신규 입사자 온보딩 가이드', meta: '가이드', daily: 5.9 },
+    { title: '점심시간 변경 투표', meta: '무엇이든 물어보세요', daily: 5.4 },
+    { title: '사내 AI 도구 사용 후기', meta: '커피챗', daily: 4.0 },
+    { title: '회의실 예약 규칙 안내', meta: '조직별 게시판', daily: 3.0 },
+    { title: '헤리릭 사용 후기 공유해요', meta: '헤리릭', daily: 2.0 },
+  ];
+  const ctrPool = [
+    { title: '신규 AI 도구 안내 배너', meta: '상단 배너', base: 18.4,
+      mult: { today: 1.15, week: 1, '2weeks': 0.97, month: 0.93, '3months': 0.90 } },
+    { title: '헤리릭 대화하기 버튼', meta: '프로모', base: 14.2,
+      mult: { today: 0.90, week: 1, '2weeks': 1.05, month: 1.08, '3months': 1.12 } },
+    { title: '서비스 점검 안내 배너', meta: '상단 배너', base: 9.8,
+      mult: { today: 1.30, week: 1, '2weeks': 0.92, month: 0.89, '3months': 0.85 } },
+    { title: '프로젝트 관리 포털 바로가기', meta: '메가메뉴', base: 7.3,
+      mult: { today: 0.85, week: 1, '2weeks': 1.10, month: 1.15, '3months': 1.20 } },
+    { title: '회의실 잡기 버튼', meta: 'GNB', base: 5.1,
+      mult: { today: 1.05, week: 1, '2weeks': 0.98, month: 0.95, '3months': 0.90 } },
+    { title: '커피챗 참여하기 배너', meta: '프로모', base: 4.2,
+      mult: { today: 1.40, week: 1, '2weeks': 1.02, month: 1.06, '3months': 1.10 } },
+  ];
+
+  function renderRankList(elId, list, formatVal) {
+    const el = document.getElementById(elId);
+    el.innerHTML = list.map((it, i) => `
+      <li><span class="rank-badge${i === 0 ? ' top' : ''}">${i + 1}</span><span class="rank-title">${it.title}</span><span class="rank-meta">${it.meta}</span><span class="rank-val">${formatVal(it)}</span></li>
+    `).join('');
+  }
+
+  function renderPopular(period) {
+    const days = periodDays[period];
+    const top5 = popularPool
+      .map(it => ({ ...it, value: Math.round(it.daily * days) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    renderRankList('popList', top5, it => it.value.toLocaleString());
+  }
+
+  function renderComments(period) {
+    const days = periodDays[period];
+    const top5 = commentPool
+      .map(it => ({ ...it, value: Math.round(it.daily * days) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    renderRankList('commentList', top5, it => it.value + '개');
+  }
+
+  function renderCtr(period) {
+    const top5 = ctrPool
+      .map(it => ({ ...it, value: Math.round(it.base * it.mult[period] * 10) / 10 }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    renderRankList('ctrList', top5, it => it.value + '%');
+  }
+
+  renderPopular('week');
+  renderComments('week');
+  renderCtr('week');
+
+  // 게시판별 활동 요약: 카테고리 필터 & 행 내 수치 갱신
+  function filterBoardSummary(){
+    const val = document.getElementById('boardFilter').value;
+    document.querySelectorAll('#boardSummaryTable .bs-row').forEach(row=>{
+      const match = (val === 'all' || row.dataset.cat === val);
+      row.classList.toggle('hidden-cat', !match);
+    });
+  }
+
+  // 가이드 / 조직별 게시판: 카테고리별 게시글·조회수·전주대비
+  const guideCatData = {
+    all:     { posts: 9, views: '1,204', trend: '▲ 6%',  up: true },
+    dev:     { posts: 3, views: '480',   trend: '▲ 9%',  up: true },
+    common:  { posts: 2, views: '310',   trend: '▲ 2%',  up: true },
+    plan:    { posts: 1, views: '120',   trend: '▼ 1%',  up: false },
+    tool:    { posts: 1, views: '150',   trend: '▲ 4%',  up: true },
+    auto:    { posts: 1, views: '90',    trend: '▲ 12%', up: true },
+    content: { posts: 1, views: '54',    trend: '▲ 3%',  up: true },
+  };
+  const orgCatData = {
+    all:      { posts: 29, views: '2,890', trend: '▼ 2%', up: false },
+    aicenter: { posts: 6,  views: '640',   trend: '▲ 5%', up: true },
+    devmgmt:  { posts: 4,  views: '420',   trend: '▼ 3%', up: false },
+    dev:      { posts: 8,  views: '780',   trend: '▲ 7%', up: true },
+    graphic:  { posts: 3,  views: '290',   trend: '▲ 1%', up: true },
+    plan:     { posts: 3,  views: '310',   trend: '▼ 4%', up: false },
+    mobile:   { posts: 3,  views: '260',   trend: '▲ 2%', up: true },
+    biz:      { posts: 2,  views: '190',   trend: '▼ 1%', up: false },
+  };
+
+  function updateCategoryRow(select, board){
+    const dataset = board === 'guide' ? guideCatData : orgCatData;
+    const info = dataset[select.value];
+    document.getElementById('posts-' + board).textContent = info.posts;
+    document.getElementById('views-' + board).textContent = info.views;
+    const trendEl = document.getElementById('trend-' + board);
+    trendEl.textContent = info.trend;
+    trendEl.classList.toggle('up-txt', info.up);
+    trendEl.classList.toggle('down-txt', !info.up);
+  }
+
+  const rolePatterns = {
+    super:      [true, true, true, true],
+    boardAdmin: [true, true, true, true],
+    user:       [true, true, false, false],
+  };
+  function renderMatrix(role){
+    const pattern = rolePatterns[role];
+    const cols = ['pv','pw','pr','ps'];
+    document.querySelectorAll('#matrixTable tbody tr').forEach(row=>{
+      cols.forEach((cls,i)=>{
+        const cell = row.querySelector('.'+cls);
+        cell.innerHTML = '<span class="perm-toggle'+(pattern[i]?' on':'')+'" onclick="tp(this)"></span>';
+      });
+    });
+  }
+  function rSel(role, btn){
+    document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    renderMatrix(role);
+  }
+  renderMatrix('super');
+
+  // ===== CSV 내보내기 =====
+  function csvEscape(v) {
+    v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  }
+
+  function exportDashboardCSV() {
+    const rows = [];
+    const today = new Date().toISOString().slice(0, 10);
+    rows.push(['AX Portal 관리자 대시보드 내보내기', today]);
+    rows.push([]);
+
+    // KPI 요약
+    rows.push(['[KPI 요약]']);
+    rows.push(['항목', '값', '증감/비고']);
+    document.querySelectorAll('.kpi-row .kpi').forEach(el => {
+      const l = el.querySelector('.l')?.textContent || '';
+      const v = el.querySelector('.v')?.textContent || '';
+      const s = el.querySelector('.s')?.textContent || '';
+      rows.push([l, v, s]);
+    });
+    rows.push([]);
+
+    // 방문자 수 추이
+    const period = document.getElementById('visitPeriod')?.value || 'week';
+    const vd = visitPeriods[period];
+    rows.push(['[방문자 수 추이 - ' + document.querySelector('#visitPeriod option:checked').textContent + ']']);
+    rows.push(['구간', vd.prevLabel, vd.nowLabel]);
+    vd.labels.forEach((label, i) => rows.push([label, vd.prev[i], vd.now[i]]));
+    rows.push([]);
+
+    // 랭킹 리스트 공통 처리
+    function pushRankSection(title, selectId, listId) {
+      const periodText = document.querySelector('#' + selectId + ' option:checked')?.textContent || '';
+      rows.push(['[' + title + ' - ' + periodText + ']']);
+      rows.push(['순위', '제목', '구분', '값']);
+      document.querySelectorAll('#' + listId + ' li').forEach((li, i) => {
+        const t = li.querySelector('.rank-title')?.textContent || '';
+        const m = li.querySelector('.rank-meta')?.textContent || '';
+        const v = li.querySelector('.rank-val')?.textContent || '';
+        rows.push([i + 1, t, m, v]);
+      });
+      rows.push([]);
+    }
+    pushRankSection('인기 게시글 TOP5', 'popPeriod', 'popList');
+    pushRankSection('댓글 많은 게시글 TOP5', 'commentPeriod', 'commentList');
+    pushRankSection('클릭률 TOP5', 'ctrPeriod', 'ctrList');
+
+    // 오늘의 온보딩 리더보드
+    rows.push(['[오늘의 온보딩 리더보드]']);
+    rows.push(['등급', '이름', '소속']);
+    [['마스터', 'tier-gold'], ['숙련자', 'tier-silver'], ['입문자', 'tier-bronze']].forEach(([tierName, id]) => {
+      document.querySelectorAll('#' + id + ' li').forEach(li => {
+        const org = li.querySelector('.tier-org')?.textContent || '';
+        const name = li.childNodes[0].textContent.trim();
+        rows.push([tierName, name, org]);
+      });
+    });
+    rows.push([]);
+
+    // 게시판별 활동 요약
+    rows.push(['[게시판별 활동 요약]']);
+    rows.push(['게시판', '게시글', '조회수', '전주 대비', '카테고리']);
+    document.querySelectorAll('#boardSummaryTable .bs-row').forEach(tr => {
+      if (tr.classList.contains('hidden-cat')) return;
+      const tds = tr.querySelectorAll('td');
+      const name = tds[0]?.textContent.trim() || '';
+      const posts = tds[1]?.textContent.trim() || '';
+      const views = tds[2]?.textContent.trim() || '';
+      const trend = tds[3]?.textContent.trim() || '';
+      const catSelect = tds[4]?.querySelector('select');
+      const cat = catSelect ? catSelect.options[catSelect.selectedIndex].textContent.trim() : (tds[4]?.textContent.trim() || '-');
+      rows.push([name, posts, views, trend, cat]);
+    });
+
+    const csvContent = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AX포탈_관리자대시보드_' + today + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
